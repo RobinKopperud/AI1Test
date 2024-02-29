@@ -5,11 +5,11 @@ import openai
 from openai import OpenAI
 
 # Initialize the Sentiment Analyzer and download necessary data
-nltk.download('vader_lexicon', quiet=True)
+#nltk.download('vader_lexicon', quiet=True)
 sia = SentimentIntensityAnalyzer()
 
 # Securely set your OpenAI API key
-api_key = "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"  # Use st.secrets in production
+api_key = "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"  # Use st.secrets in production
 
 def get_sentiment(text):
     scores = sia.polarity_scores(text)
@@ -32,12 +32,15 @@ def generate_response_with_chatgpt(input_text, tone):
         messages.append({"role": role, "content": msg})
     
     # Add the current user's message
-    messages.append({"role": "user", "content": f"Write a really {tone} response to: '{input_text}'"})
+    messages.append({"role": "user", "content": f"Write a really {tone} response to our messages and: '{input_text}'"})
+
+    print("Messages Payload:", messages)
 
     # Request a chat completion using the specified method and model
     chat_completion = client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-3.5-turbo-1106",
         messages=messages,
+        temperature=0.2
     )
     
     # Extract and return the generated response
@@ -46,12 +49,10 @@ def generate_response_with_chatgpt(input_text, tone):
 
 def handle_message_input(user_input):
     # Check if message count exceeds 5
-    if st.session_state['message_count'] > 5:
+    if st.session_state['message_count'] > 6:
         # Reset session state
-        st.session_state['message_count'] = 0
-        st.session_state.clear()  # This clears the list but keeps the key in session state
-        # Optionally, you can use st.session_state.clear() to remove all session state keys
-        st.experimental_rerun()  # Rerun the app to reflect the reset immediately
+        st.session_state.clear()
+        st.rerun()  # Rerun the app to reflect the reset immediately
 
 # Initialize session state variables
 if 'message_count' not in st.session_state:
@@ -64,12 +65,13 @@ if 'messages' not in st.session_state:
     st.session_state['messages'] = []
 
 # UI for setting the mood
-st.title("AI Chat Application")
+st.title("Twisted Chatbot")
 st.caption("This is a tweaked chatbot that uses the OpenAI Chat API. The user sets the mood of the conversation and the AI responds in the selected mood. Set the mood and try to get a respond up to 5 times, to continue the conversation, type in the textbox above RESPOND ")
 if 'mood' not in st.session_state or st.session_state['mood'] == '':
 
     mood_setter = st.text_input("How do you feel?", key="mood_setter")
     if st.button("Set Mood"):
+        st.balloons()
         conversation_tone, compound_score = get_sentiment(mood_setter)
         st.session_state['mood'] = conversation_tone
         st.success(f"Mood set to {conversation_tone}.")
